@@ -2,34 +2,48 @@
 
 module.exports = function(app, fs, User, Savedimage, Contact)
 {
-    // GET user
-    app.get('/api/user/:user_name', function(req, res){
-      console.log("GET : /api/user/:user_name");
-      User.findOne({alias: req.params.user_name}, function(err, user){
-          if(err) return res.status(500).json({result: "failure", error: err});
-          if(!user) return res.status(404).json({result: "failure", error: 'user not found'});
-          user.set("result", "success");
-          res.json(user);
-      })
-    });
+
+  // GET user
+  app.get('/api/id/:id', function(req, res){
+    console.log("GET : /api/id/:id");
+    var id = req.params.id;
+    User.findOne({unique_id: id}, function(err, user){
+      console.log(id);
+        if(err) return res.status(500).json({error: err});
+        if(!user) return res.json({result : "Failure"});
+        res.json({result: "Success", content: user.alias});
+    })
+  });
+
+  // GET user
+  app.get('/api/user/:user_name', function(req, res){
+    console.log("GET : /api/user/:user_name");
+    User.findOne({alias: req.params.user_name}, function(err, user){
+        if(err) return res.status(500).json({error: err});
+        if(!user) return res.status(404).json({result : "Failure"});
+        res.json({result: "Success"});
+    })
+  });
 
     // CREATE user
     app.post('/api/user/:user_name', function(req, res){
       console.log("POST : /api/user/:user_name");
+      console.log(req.body);
       var user = new User();
       user.alias = req.params.user_name;
       console.log(user.alias);
-      user.unique_id = "0000";
+      user.unique_id = req.body.fbid;
+      console.log(user.unique_id);
       user.published_date = new Date().getTime();
       console.log(user.published_date);
 
       user.save(function(err){
           if(err){
               console.error(err);
-              res.json({result: "failure", message: "Faile to createUser > " + user.alias});
+              res.json({result: "Failure"});
               return;
           }
-          res.json({result: "Succesfully create User > " + user.alias});
+          res.json({result: "Success"});
       });
     });
 
@@ -37,8 +51,8 @@ module.exports = function(app, fs, User, Savedimage, Contact)
     app.get('/api/contacts/:user_name', function(req, res){
       console.log("GET : /api/contacts/:user_name");
         User.findOne({alias: req.params.user_name}, function(err, user){
-            if(err) return res.status(500).json({result: "failure", error: err});
-            if(!user) return res.status(404).json({result: "failure", error: 'user not found'});
+            if(err) return res.status(500).json({error: err});
+            if(!user) return res.status(404).json({error: 'user not found'});
 
             Contact.find({owner : req.params.user_name}, function(err, contact){
               res.json(contact);
@@ -54,9 +68,9 @@ module.exports = function(app, fs, User, Savedimage, Contact)
       User.findOne({alias: raw_owner}, function(err, user){
           if(err){
             console.log(err);
-            return res.status(500).json({result: "failure", error: 'database failure' });
+            return res.status(500).json({ error: 'database failure' });
           }
-          if(!user) return res.status(404).json({result: "failure", error: 'user not found' });
+          if(!user) return res.status(404).json({ error: 'user not found' });
 
           console.log(req.body.contacts);
 
@@ -91,7 +105,7 @@ module.exports = function(app, fs, User, Savedimage, Contact)
                   cont.save(function(err){
                       if(err){
                           console.error(err);
-                          res.json({result: "failure", message: "save error"});
+                          res.json({result: 0});
                           return;
                       }
                   });
@@ -106,7 +120,7 @@ module.exports = function(app, fs, User, Savedimage, Contact)
                   contact.save(function(err){
                       if(err){
                           console.error(err);
-                          res.json({result: "failure", message: "modify error"});
+                          res.json({result: 0});
                           return;
                       }
                   });
@@ -132,9 +146,9 @@ module.exports = function(app, fs, User, Savedimage, Contact)
       User.findOne({alias: raw_owner}, function(err, user){
           if(err){
             console.log(err);
-            return res.status(500).json({result: "failure", error: 'database failure' });
+            return res.status(500).json({ error: 'database failure' });
           }
-          if(!user) return res.status(404).json({result: "failure", error: 'user not found' });
+          if(!user) return res.status(404).json({ error: 'user not found' });
 
           console.log(req.body.contacts);
 
@@ -172,8 +186,8 @@ module.exports = function(app, fs, User, Savedimage, Contact)
       var owner = req.params.user_name;
       var file_name = req.params.file_name;
       Savedimage.find({owner : owner}, function(err, savedimage){
-        if(err) return res.status(500).json({result: "failure", error: err});
-        if(!savedimage) return res.status(404).json({result: "failure", error: 'Image not found'});
+        if(err) return res.status(500).json({error: err});
+        if(!savedimage) return res.status(404).json({error: 'Image not found'});
 
         res.json(savedimage);
       });
@@ -185,8 +199,8 @@ module.exports = function(app, fs, User, Savedimage, Contact)
       var owner = req.params.user_name;
       var file_name = req.params.file_name;
       Savedimage.findOne({owner : owner, name : file_name}, function(err, savedimage){
-        if(err) return res.status(500).json({result: "failure", error: err});
-        if(!savedimage) return res.status(404).json({result: "failure", error: 'Image not found'});
+        if(err) return res.status(500).json({error: err});
+        if(!savedimage) return res.status(404).json({error: 'Image not found'});
 
         var savename = "images/" + owner + "_" + file_name;
 
@@ -210,7 +224,7 @@ module.exports = function(app, fs, User, Savedimage, Contact)
       var owner = req.body.user_name;
       var file_name = req.body.name;
       Savedimage.findOne({owner : owner, name : file_name}, function(err, savedimage){
-        if(err) return res.status(500).json({result: "failure", error: err});
+        if(err) return res.status(500).json({error: err});
         if(!savedimage){
           var savedimage = new Savedimage();
           savedimage.owner = owner;
@@ -223,7 +237,7 @@ module.exports = function(app, fs, User, Savedimage, Contact)
         fs.writeFile(savename, req.body.data, 'base64', function(err) {
           if(err){
             console.log("error", err);
-            res.json({result: "failure", result: "Error in converting"});
+            res.json({result: "Error in converting"});
             return;
           }
         });
@@ -231,7 +245,7 @@ module.exports = function(app, fs, User, Savedimage, Contact)
         savedimage.save(function(err){
             if(err){
                 console.error(err);
-                res.json({result: "failure", result: "Error in saving"});
+                res.json({result: "Error in saving"});
                 return;
             }
             res.json({result: "Successfully update the image"});
@@ -251,8 +265,8 @@ module.exports = function(app, fs, User, Savedimage, Contact)
       });
 
       Savedimage.remove({owner : owner, name : file_name}, function(err, output){
-        if(err) return res.status(500).json({result: "failure", error: err});
-        if(!output) return res.status(404).json({result: "failure", error: 'Image not found'});
+        if(err) return res.status(500).json({error: err});
+        if(!output) return res.status(404).json({error: 'Image not found'});
         res.json({result: "Successfully delete image"});
       });
     });
