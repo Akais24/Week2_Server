@@ -66,6 +66,7 @@ module.exports = function(app, fs, User, Savedimage, Contact)
   // UPDATE contact lists
   app.put('/api/contacts/:user_name', function(req, res){
     console.log("PUT : /api/contacts/:user_name");
+      console.log(req.body);
     var raw_owner = req.params.user_name;
     User.findOne({alias: raw_owner}, function(err, user){
         if(err){
@@ -76,6 +77,8 @@ module.exports = function(app, fs, User, Savedimage, Contact)
 
         console.log(req.body.contacts);
 
+        var contact_jsons = JSON.parse(req.body.contacts);
+
         var i = 0;
         var new_count = 0;
         var m_count = 0;
@@ -83,26 +86,26 @@ module.exports = function(app, fs, User, Savedimage, Contact)
         function recurse(n, m){
           var new_count = n;
           var m_count = m;
-          if(i < req.body.contacts.length){
-            var raw_name = req.body.contacts[i].name;
-            var raw_number = req.body.contacts[i].number;
-            var raw_email = req.body.contacts[i].email;
+          if(i < contact_jsons.length){
+            var raw_name = contact_jsons[i].name;
+            var raw_number = contact_jsons[i].number;
+            var raw_email = contact_jsons[i].email;
 
             Contact.findOne({owner: raw_owner, name : raw_name}, function(err, contact){
               if(err){
                 return;
               }
               if(!contact){
-                console.log("Make Newone");
                 var cont = new Contact();
                 cont.owner = req.params.user_name;
-                console.log("owner : " + cont.owner);
                 cont.name = raw_name;
-                console.log("name : " + cont.name);
                 cont.number = raw_number;
-                console.log("number : " + cont.number);
                 cont.email = raw_email;
-                console.log("email : " + cont.email);
+                //   console.log("Make Newone");
+                // console.log("owner : " + cont.owner);
+                // console.log("name : " + cont.name);
+                // console.log("number : " + cont.number);
+                // console.log("email : " + cont.email);
 
                 cont.save(function(err){
                     if(err){
@@ -113,11 +116,11 @@ module.exports = function(app, fs, User, Savedimage, Contact)
                 });
                 new_count++;
               }else{
-                console.log(raw_name + " of " + raw_owner + " is already exist!");
+                //console.log(raw_name + " of " + raw_owner + " is already exist!");
                 contact.number = raw_number;
-                console.log("number(m) : " + contact.number);
+                //console.log("number(m) : " + contact.number);
                 contact.email = raw_email;
-                console.log("email(m) : " + contact.email);
+                //console.log("email(m) : " + contact.email);
 
                 contact.save(function(err){
                     if(err){
